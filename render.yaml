@@ -1,0 +1,27 @@
+# Render Blueprint for RAG ChatBot Backend
+# Deploy: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: rag-chatbot-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: singapore  # Change to your preferred region
+    plan: free         # Use 'starter' for production
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false    # Set manually in Render dashboard
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: CHUNK_SIZE
+        value: "500"
+      - key: CHUNK_OVERLAP
+        value: "100"
+      - key: RAG_SIMILARITY_THRESHOLD
+        value: "0.35"
+    disk:
+      name: chroma-data
+      mountPath: /app/chroma_data
+      sizeGB: 1        # Free tier allows 1GB
