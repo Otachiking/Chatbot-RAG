@@ -3,10 +3,11 @@
  *
  * Left sidebar showing list of chat threads.
  * Features:
- *  - Create new thread
+ *  - Create new thread (button in list)
  *  - Switch between threads
- *  - Delete thread
- *  - Threads persist in localStorage
+ *  - Delete/rename thread
+ *  - Collapsible (shows only icons when collapsed)
+ *  - Representative icon per thread
  */
 
 import React from "react";
@@ -14,6 +15,7 @@ import React from "react";
 export interface Thread {
   id: string;
   title: string;
+  icon: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,22 +23,31 @@ export interface Thread {
 interface Props {
   threads: Thread[];
   activeThreadId: string | null;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   onSelectThread: (threadId: string) => void;
   onCreateThread: () => void;
   onDeleteThread: (threadId: string) => void;
   onRenameThread: (threadId: string, newTitle: string) => void;
+  onChangeIcon: (threadId: string, newIcon: string) => void;
 }
+
+const THREAD_ICONS = ["💬", "📝", "🔍", "💡", "📊", "🎯", "📚", "🧪", "⚡", "🌟"];
 
 const ThreadSidebar: React.FC<Props> = ({
   threads,
   activeThreadId,
+  collapsed,
+  onToggleCollapse,
   onSelectThread,
   onCreateThread,
   onDeleteThread,
   onRenameThread,
+  onChangeIcon,
 }) => {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editValue, setEditValue] = React.useState("");
+  const [iconPickerId, setIconPickerId] = React.useState<string | null>(null);
 
   const handleStartRename = (thread: Thread) => {
     setEditingId(thread.id);
@@ -51,38 +62,66 @@ const ThreadSidebar: React.FC<Props> = ({
     setEditValue("");
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDateTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("id-ID", {
+    const day = date.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
     });
+    const time = date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${day}, ${time}`;
   };
 
   return (
-    <aside className="thread-sidebar">
+    <aside className={`thread-sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="sidebar-header">
-        <h3>💬 Threads</h3>
+        {!collapsed && <h3>💬 Threads</h3>}
         <button
-          className="btn btn-primary btn-sm"
-          onClick={onCreateThread}
-          title="New Thread"
+          className="collapse-btn"
+          onClick={onToggleCollapse}
+          title={collapsed ? "Expand" : "Collapse"}
         >
-          + New
+          <span className="material-symbols-outlined">
+            {collapsed ? "right_panel_open" : "left_panel_close"}
+          </span>
         </button>
       </div>
 
       <div className="thread-list">
-        {threads.length === 0 ? (
-          <p className="empty-state">No threads yet. Create one!</p>
+        {/* New Thread Button */}
+        <button
+          className={`new-thread-btn ${collapsed ? "collapsed" : ""}`}
+          onClick={onCreateThread}
+          title="New Thread"
+        >
+          <span className="material-symbols-outlined">add</span>
+          {!collapsed && <span>New Chat</span>}
+        </button>
+
+        {threads.length === 0 && !collapsed ? (
+          <p className="empty-state">No threads yet</p>
         ) : (
           threads.map((thread) => (
             <div
               key={thread.id}
-              className={`thread-item ${activeThreadId === thread.id ? "active" : ""}`}
+              className={`thread-item ${activeThreadId === thread.id ? "active" : ""} ${collapsed ? "collapsed" : ""}`}
               onClick={() => onSelectThread(thread.id)}
+              title={collapsed ? thread.title : undefined}
             >
-              {editingId === thread.id ? (
+              {collapsed ? (
+                <span
+                  className="thread-icon-only"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIconPickerId(iconPickerId === thread.id ? null : thread.id);
+                  }}
+                >
+                  {thread.icon}
+                </span>
+              ) : editingId === thread.id ? (
                 <input
                   type="text"
                   value={editValue}
@@ -95,9 +134,19 @@ const ThreadSidebar: React.FC<Props> = ({
                 />
               ) : (
                 <>
+                  <span
+                    className="thread-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIconPickerId(iconPickerId === thread.id ? null : thread.id);
+                    }}
+                    title="Change icon"
+                  >
+                    {thread.icon}
+                  </span>
                   <div className="thread-info">
                     <span className="thread-title">{thread.title}</span>
-                    <span className="thread-date">{formatDate(thread.updatedAt)}</span>
+                    <span className="thread-date">{formatDateTime(thread.updatedAt)}</span>
                   </div>
                   <div className="thread-actions">
                     <button
@@ -108,7 +157,7 @@ const ThreadSidebar: React.FC<Props> = ({
                       }}
                       title="Rename"
                     >
-                      ✏️
+                      <span className="material-symbols-outlined">edit</span>
                     </button>
                     <button
                       className="icon-btn danger"
@@ -120,10 +169,28 @@ const ThreadSidebar: React.FC<Props> = ({
                       }}
                       title="Delete"
                     >
-                      🗑️
+                      <span className="material-symbols-outlined">delete</span>
                     </button>
                   </div>
                 </>
+              )}
+
+              {/* Icon Picker */}
+              {iconPickerId === thread.id && (
+                <div className="icon-picker" onClick={(e) => e.stopPropagation()}>
+                  {THREAD_ICONS.map((icon) => (
+                    <button
+                      key={icon}
+                      className={`icon-option ${thread.icon === icon ? "selected" : ""}`}
+                      onClick={() => {
+                        onChangeIcon(thread.id, icon);
+                        setIconPickerId(null);
+                      }}
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           ))

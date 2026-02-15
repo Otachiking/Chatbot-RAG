@@ -1,51 +1,53 @@
 /**
  * RecommendCard.tsx
  *
- * Shown after a successful upload.  Offers quick-action buttons
- * ("Summarize", "Generate Quiz") that call the backend stub.
- *
- * TODO: Add more recommended actions as the product evolves
- * (e.g., "Extract key terms", "Generate flashcards").
+ * Floating banner shown after a successful upload.
+ * Compact design with truncated filename and two action buttons.
  */
 
 import React from "react";
 
 interface Props {
   filename: string;
-  pages: number;
   onAction: (type: "summarize" | "quiz") => void;
   disabled?: boolean;
 }
 
 const RecommendCard: React.FC<Props> = ({
   filename,
-  pages,
   onAction,
   disabled,
-}) => (
-  <div className="recommend-card">
-    <h3>✨ Document Ready</h3>
-    <p>
-      <span className="filename">{filename}</span>
-      ({pages} pages) has been processed. Try one of the recommended actions below:
-    </p>
-    <div className="actions">
-      <button
-        className="btn btn-primary btn-sm"
-        disabled={disabled}
-        onClick={() => onAction("summarize")}
-      >
-        📝 Summarize
-      </button>
-      <button
-        className="btn btn-outline btn-sm"
-        disabled={disabled}
-        onClick={() => onAction("quiz")}
-      >
-        🧩 Generate Quiz
-      </button>
+}) => {
+  // Truncate filename if too long
+  const truncatedName = filename.length > 25
+    ? filename.slice(0, 22) + "..."
+    : filename;
+
+  return (
+    <div className="recommend-banner">
+      <div className="banner-info">
+        <span className="banner-icon">✨</span>
+        <span className="banner-text">Ready</span>
+        <span className="banner-filename" title={filename}>{truncatedName}</span>
+      </div>
+      <div className="banner-actions">
+        <button
+          className="btn btn-primary btn-sm"
+          disabled={disabled}
+          onClick={() => onAction("summarize")}
+        >
+          📝 Summarize
+        </button>
+        <button
+          className="btn btn-primary btn-sm"
+          disabled={disabled}
+          onClick={() => onAction("quiz")}
+        >
+          🧩 Quiz
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default RecommendCard;

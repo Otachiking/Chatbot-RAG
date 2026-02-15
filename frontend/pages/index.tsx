@@ -36,7 +36,7 @@ const BACKEND =
   "http://localhost:8000";
 
 // Version info - update this when releasing
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.3.0";
 const LAST_UPDATED = "15 Februari 2026";
 
 // ---------------------------------------------------------------------------
@@ -101,6 +101,9 @@ export default function Home() {
   const [actionLoading, setActionLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [previewSource, setPreviewSource] = useState<Source | null>(null);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // -- localStorage persistence ---------------------------------------------
 
@@ -178,6 +181,7 @@ export default function Home() {
     const newThread: Thread = {
       id: `thread-${Date.now()}`,
       title: "New Chat",
+      icon: "💬",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -232,6 +236,16 @@ export default function Home() {
       }
     }
   }, [activeThreadId, threads, handleSelectThread]);
+
+  const handleChangeIcon = useCallback((threadId: string, newIcon: string) => {
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === threadId
+          ? { ...t, icon: newIcon, updatedAt: new Date().toISOString() }
+          : t
+      )
+    );
+  }, []);
 
   // -- Source management ----------------------------------------------------
 
@@ -364,6 +378,7 @@ export default function Home() {
         const newThread: Thread = {
           id: `thread-${Date.now()}`,
           title: result.filename.replace(/\.[^/.]+$/, "").slice(0, 30),
+          icon: result.type === "pdf" ? "📄" : "🖼️",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -414,6 +429,17 @@ export default function Home() {
       <div className="app-shell">
         {/* ---- Header ---- */}
         <header className="app-header">
+          {/* Mobile hamburger */}
+          <button
+            className="hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            title="Menu"
+          >
+            <span className="material-symbols-outlined">
+              {mobileMenuOpen ? "close" : "menu"}
+            </span>
+          </button>
+          
           <div className="header-left">
             <h1>
               RAG Chat<span className="version-badge">v{APP_VERSION}</span>
@@ -436,19 +462,30 @@ export default function Home() {
         </header>
 
         {/* ---- Main grid (3-column NotebookLM style) ---- */}
-        <div className="main-grid">
+        <div className={`main-grid ${leftCollapsed ? "left-collapsed" : ""} ${rightCollapsed ? "right-collapsed" : ""}`}>
+          {/* Mobile overlay */}
+          {mobileMenuOpen && (
+            <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)} />
+          )}
+
           {/* Left: Thread Sidebar */}
           <ThreadSidebar
             threads={threads}
             activeThreadId={activeThreadId}
-            onSelectThread={handleSelectThread}
+            collapsed={leftCollapsed}
+            onToggleCollapse={() => setLeftCollapsed(!leftCollapsed)}
+            onSelectThread={(id) => {
+              handleSelectThread(id);
+              setMobileMenuOpen(false);
+            }}
             onCreateThread={handleCreateThread}
             onRenameThread={handleRenameThread}
             onDeleteThread={handleDeleteThread}
+            onChangeIcon={handleChangeIcon}
           />
 
           {/* Center: Chat */}
-          <div className="chat-area">
+          <div className="chat-center">
             <ChatWindow
               messages={messages}
               onSend={handleSend}
@@ -461,22 +498,21 @@ export default function Home() {
               } : null}
             />
             
-            {/* Quick actions when source is available */}
+            {/* Floating recommend banner */}
             {uploadResult && (
-              <div className="quick-actions">
-                <RecommendCard
-                  filename={uploadResult.filename}
-                  pages={uploadResult.pages}
-                  onAction={handleRecommendAction}
-                  disabled={actionLoading}
-                />
-              </div>
+              <RecommendCard
+                filename={uploadResult.filename}
+                onAction={handleRecommendAction}
+                disabled={actionLoading}
+              />
             )}
           </div>
 
           {/* Right: Sources Panel */}
           <SourcesPanel
             sources={sources}
+            collapsed={rightCollapsed}
+            onToggleCollapse={() => setRightCollapsed(!rightCollapsed)}
             onToggleSource={handleToggleSource}
             onToggleAll={handleToggleAllSources}
             onDeleteSource={handleDeleteSource}

@@ -177,7 +177,7 @@ https://portfolio-otachiking.vercel.app/
       <div className="input-bar">
         <input
           type="text"
-          placeholder="Ask a question about the uploaded document…"
+          placeholder="Ask a question…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -186,11 +186,11 @@ https://portfolio-otachiking.vercel.app/
           Send
         </button>
         <button
-          className="btn btn-ghost btn-sm"
+          className="btn btn-ghost btn-icon"
           onClick={exportTranscript}
           title="Export transcript"
         >
-          ⬇ Export
+          💾
         </button>
       </div>
     </div>
