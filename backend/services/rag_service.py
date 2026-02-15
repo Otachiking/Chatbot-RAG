@@ -188,7 +188,7 @@ def generate_rag_response(
     similarities = [max(0, 1 - d) for d in distances]
     if query_type == "freeform" and similarities and similarities[0] < RAG_SIMILARITY_THRESHOLD:
         # Low confidence — fall back to general chat
-        gen_result = generate_general_response(query)
+        gen_result = generate_general_response(query, history)
         gen_result["retrieval_latency_ms"] = ret_ms
         gen_result["chunk_ids"] = ids
         gen_result["scores"] = similarities

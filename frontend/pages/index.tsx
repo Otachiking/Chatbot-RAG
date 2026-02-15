@@ -36,8 +36,8 @@ const BACKEND =
   "http://localhost:8000";
 
 // Version info - update this when releasing
-const APP_VERSION = "1.3.0";
-const LAST_UPDATED = "15 Februari 2026";
+const APP_VERSION = "1.3.2";
+const LAST_UPDATED = "15 Feb '26";
 
 // ---------------------------------------------------------------------------
 // Seed messages so the chat doesn't start empty
