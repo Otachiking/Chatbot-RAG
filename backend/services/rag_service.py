@@ -100,8 +100,10 @@ def _build_history_context(history: List[Dict[str, str]]) -> str:
         return ""
     lines = []
     for msg in history[-10:]:  # Last 10 messages for context
-        role = "User" if msg["role"] == "user" else "Assistant"
-        lines.append(f"{role}: {msg['text']}")
+        role = "User" if msg.get("role") == "user" else "Assistant"
+        text = str(msg.get("text", "")).strip()
+        if text:
+            lines.append(f"{role}: {text}")
     return "\n".join(lines)
 
 
@@ -316,4 +318,18 @@ async def handle_query(
             success=False,
             error=str(exc),
         )
-        raise
+        try:
+            fallback = await asyncio.to_thread(
+                generate_general_response, query, history
+            )
+            return {
+                "answer": fallback.get("answer", "Maaf, terjadi gangguan sementara. Silakan coba lagi."),
+                "sources": [],
+                "file_id": file_id,
+            }
+        except Exception:
+            return {
+                "answer": "Maaf, server sedang sibuk. Coba beberapa detik lagi.",
+                "sources": [],
+                "file_id": file_id,
+            }

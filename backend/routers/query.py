@@ -6,7 +6,7 @@ and query type. Routes to the hybrid RAG service.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 from services.rag_service import handle_query
@@ -25,7 +25,7 @@ class QueryRequest(BaseModel):
     query: str = ""
     type: str = "freeform"        # "summarize" | "quiz" | "freeform"
     use_rag: bool = False         # NEW — hybrid toggle
-    history: List[HistoryMessage] = []  # Conversation history for context
+    history: List[HistoryMessage] = Field(default_factory=list)  # Conversation history for context
 
 
 @router.post("/api/query")

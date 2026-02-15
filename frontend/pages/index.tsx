@@ -327,7 +327,16 @@ export default function Home() {
           }),
         });
 
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        if (!res.ok) {
+          let detail = "";
+          try {
+            const errData = await res.json();
+            detail = errData?.detail ? `: ${errData.detail}` : "";
+          } catch {
+            detail = "";
+          }
+          throw new Error(`Server returned ${res.status}${detail}`);
+        }
 
         const data = await res.json();
 
@@ -336,9 +345,9 @@ export default function Home() {
 
         setIsTyping(false);
         addBotMessage(data.answer, data.sources);
-      } catch {
+      } catch (err: any) {
         setIsTyping(false);
-        showToast("Server unavailable \u2014 try again");
+        showToast(err?.message || "Server unavailable \u2014 try again");
       }
     },
     [uploadResult, useRag, addBotMessage, showToast]

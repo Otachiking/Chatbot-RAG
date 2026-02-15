@@ -41,14 +41,6 @@ const FileUploader: React.FC<Props> = ({
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [uploadedFile, setUploadedFile] = useState<{
-    name: string;
-    size: number;
-    pages?: number;
-    type?: string;
-  } | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewType, setPreviewType] = useState<"pdf" | "image">("pdf");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // -- Upload logic ----------------------------------------------------------
@@ -57,13 +49,6 @@ const FileUploader: React.FC<Props> = ({
     async (file: File) => {
       setUploading(true);
       setProgress(0);
-      setUploadedFile(null);
-
-      // Create client-side preview URL
-      const objUrl = URL.createObjectURL(file);
-      const isImage = file.type.startsWith("image/");
-      setPreviewUrl(objUrl);
-      setPreviewType(isImage ? "image" : "pdf");
 
       // Simulate progress animation while the real request is in-flight.
       // The backend stub sleeps ~1 s so we animate from 0 → 90 % over 800 ms
@@ -89,7 +74,6 @@ const FileUploader: React.FC<Props> = ({
 
         const data: UploadResult = await res.json();
         setProgress(100);
-        setUploadedFile({ name: file.name, size: file.size, pages: data.pages, type: data.type });
 
         // Let the parent know
         setTimeout(() => onUploadComplete(data), 400);
@@ -132,11 +116,6 @@ const FileUploader: React.FC<Props> = ({
 
   // -- Render ----------------------------------------------------------------
 
-  const formatSize = (bytes: number) =>
-    bytes < 1024 * 1024
-      ? `${(bytes / 1024).toFixed(1)} KB`
-      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-
   return (
     <div>
       <h3 style={{ fontSize: ".88rem", marginBottom: 10, fontWeight: 700 }}>
@@ -177,37 +156,6 @@ const FileUploader: React.FC<Props> = ({
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
-      )}
-
-      {/* File preview after successful upload */}
-      {uploadedFile && (
-        <div className="file-preview">
-          <span className="icon">✅</span>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <span className="file-name-scroll">{uploadedFile.name}</span>
-            {formatSize(uploadedFile.size)}
-            {uploadedFile.pages != null && ` · ${uploadedFile.pages} pages`}
-            {uploadedFile.type && ` · ${uploadedFile.type.toUpperCase()}`}
-          </div>
-        </div>
-      )}
-
-      {/* Image preview */}
-      {previewUrl && previewType === "image" && uploadedFile && (
-        <img
-          src={previewUrl}
-          alt="Uploaded preview"
-          className="image-preview"
-        />
-      )}
-
-      {/* PDF embed preview */}
-      {previewUrl && previewType === "pdf" && uploadedFile && (
-        <iframe
-          src={previewUrl}
-          title="PDF preview"
-          className="pdf-preview"
-        />
       )}
     </div>
   );
