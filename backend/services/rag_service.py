@@ -217,6 +217,7 @@ def generate_rag_response(
 async def handle_query(
     query: str,
     file_id: Optional[str] = None,
+    filename: Optional[str] = None,
     use_rag: bool = False,
     query_type: str = "freeform",
     top_k: int = 4,
@@ -231,13 +232,14 @@ async def handle_query(
     # Enrich query for specific action types
     effective_query = query
     effective_top_k = top_k
+    doc_context = f"untuk dokumen '{filename}'" if filename else "untuk dokumen yang diberikan"
     
     if use_rag and file_id:
         if query_type == "summarize":
-            effective_query = "Berikan ringkasan lengkap dan komprehensif dari seluruh isi dokumen ini. Sertakan poin-poin utama."
+            effective_query = f"Berikan ringkasan lengkap dan komprehensif {doc_context}. Sertakan poin-poin utama dari dokumen tersebut."
             effective_top_k = 20  # Get more chunks for summary
         elif query_type == "quiz":
-            effective_query = "Buat 5 soal kuis pilihan ganda (A, B, C, D) beserta kunci jawabannya berdasarkan informasi penting dalam dokumen ini."
+            effective_query = f"Buat 5 soal kuis pilihan ganda (A, B, C, D) beserta kunci jawabannya berdasarkan informasi penting {doc_context}."
             effective_top_k = 20  # Get more chunks for quiz
 
     try:

@@ -125,18 +125,41 @@ https://portfolio-otachiking.vercel.app/
     URL.revokeObjectURL(url);
   };
 
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(messageId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       {/* ---- Messages ---- */}
       <div className="chat-area">
         {messages.map((m) => (
           <div key={m.id} className={`msg ${m.role}`}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+            <div className="msg-content">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+            </div>
             {m.sources?.map((s, i) => (
               <span key={i} className="citation">
                 Hal.&thinsp;{s.page}
               </span>
             ))}
+            {m.role === "bot" && (
+              <button
+                className="copy-btn"
+                onClick={() => copyToClipboard(m.text, m.id)}
+                title={copiedId === m.id ? "Copied!" : "Copy message"}
+              >
+                {copiedId === m.id ? "✓" : "📋"}
+              </button>
+            )}
           </div>
         ))}
 

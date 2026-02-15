@@ -16,6 +16,7 @@ router = APIRouter()
 
 class QueryRequest(BaseModel):
     file_id: Optional[str] = None
+    filename: Optional[str] = None  # Document name for context
     query: str = ""
     type: str = "freeform"        # "summarize" | "quiz" | "freeform"
     use_rag: bool = False         # NEW — hybrid toggle
@@ -34,6 +35,7 @@ async def query_document(req: QueryRequest):
         result = await handle_query(
             query=req.query,
             file_id=req.file_id,
+            filename=req.filename,
             use_rag=req.use_rag,
             query_type=req.type,
         )
