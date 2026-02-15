@@ -3,10 +3,11 @@
  *
  * Right panel showing uploaded documents (sources).
  * Features:
- *  - List all uploaded documents
- *  - Checkbox to enable/disable each source for RAG
- *  - Click to preview document
- *  - Delete source
+ *  - Upload Document section at top (drag & drop)
+ *  - List all uploaded documents with file-type icons
+ *  - Checkbox on right to enable/disable each source for RAG
+ *  - Delete button on far right
+ *  - Click filename to preview document
  *  - Collapsible (shows only icons when collapsed)
  */
 
@@ -33,6 +34,11 @@ interface Props {
   uploadComponent: React.ReactNode;
 }
 
+const FILE_TYPE_ICONS: Record<string, string> = {
+  pdf: "📄",
+  image: "🖼️",
+};
+
 const SourcesPanel: React.FC<Props> = ({
   sources,
   collapsed,
@@ -49,6 +55,8 @@ const SourcesPanel: React.FC<Props> = ({
   const handleSelectAll = () => {
     onToggleAll(!allEnabled);
   };
+
+  const getFileIcon = (type: string) => FILE_TYPE_ICONS[type] || "📄";
 
   return (
     <aside className={`sources-panel ${collapsed ? "collapsed" : ""}`}>
@@ -72,19 +80,7 @@ const SourcesPanel: React.FC<Props> = ({
         </div>
       )}
 
-      {sources.length > 0 && !collapsed && (
-        <div className="sources-controls">
-          <label className="select-all">
-            <input
-              type="checkbox"
-              checked={allEnabled}
-              onChange={handleSelectAll}
-            />
-            <span>Select all</span>
-          </label>
-        </div>
-      )}
-
+      {/* Source list */}
       <div className="sources-list">
         {sources.length === 0 && !collapsed ? (
           <div className="empty-state">
@@ -103,34 +99,29 @@ const SourcesPanel: React.FC<Props> = ({
                   className="source-icon-only"
                   onClick={() => onPreviewSource(source)}
                 >
-                  {source.type === "pdf" ? "📄" : "🖼️"}
+                  {getFileIcon(source.type)}
                 </span>
               ) : (
                 <>
-                  <label className="source-checkbox">
+                  <span className="source-type-icon">
+                    {getFileIcon(source.type)}
+                  </span>
+                  <span
+                    className="source-name-link"
+                    onClick={() => onPreviewSource(source)}
+                    title="Click to preview"
+                  >
+                    {source.filename}
+                  </span>
+                  <label className="source-checkbox-right">
                     <input
                       type="checkbox"
                       checked={source.enabled}
                       onChange={() => onToggleSource(source.file_id)}
                     />
                   </label>
-                  <div
-                    className="source-info"
-                    onClick={() => onPreviewSource(source)}
-                    title="Click to preview"
-                  >
-                    <span className="source-icon">
-                      {source.type === "pdf" ? "📄" : "🖼️"}
-                    </span>
-                    <div className="source-details">
-                      <span className="source-name">{source.filename}</span>
-                      <span className="source-meta">
-                        {source.pages} pages • {source.chunks_indexed} chunks
-                      </span>
-                    </div>
-                  </div>
                   <button
-                    className="icon-btn danger"
+                    className="icon-btn danger source-delete-btn"
                     onClick={() => {
                       if (confirm(`Delete "${source.filename}"?`)) {
                         onDeleteSource(source.file_id);

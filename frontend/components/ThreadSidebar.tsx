@@ -24,6 +24,7 @@ interface Props {
   threads: Thread[];
   activeThreadId: string | null;
   collapsed: boolean;
+  mobileOpen?: boolean;
   onToggleCollapse: () => void;
   onSelectThread: (threadId: string) => void;
   onCreateThread: () => void;
@@ -38,6 +39,7 @@ const ThreadSidebar: React.FC<Props> = ({
   threads,
   activeThreadId,
   collapsed,
+  mobileOpen,
   onToggleCollapse,
   onSelectThread,
   onCreateThread,
@@ -76,7 +78,7 @@ const ThreadSidebar: React.FC<Props> = ({
   };
 
   return (
-    <aside className={`thread-sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`thread-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="sidebar-header">
         {!collapsed && <h3>💬 Threads</h3>}
         <button

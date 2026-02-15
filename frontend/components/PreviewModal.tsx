@@ -2,7 +2,8 @@
  * PreviewModal.tsx
  *
  * Modal to preview uploaded documents.
- * Shows PDF in iframe or image directly.
+ * Shows document title, metadata, and a back button.
+ * Design follows NotebookLM-style preview.
  */
 
 import React from "react";
@@ -16,33 +17,64 @@ interface Props {
 const PreviewModal: React.FC<Props> = ({ source, onClose }) => {
   if (!source) return null;
 
+  const uploadDate = new Date(source.uploadedAt).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content preview-doc-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>{source.filename}</h3>
+          <h3>Preview Document</h3>
           <button className="modal-close" onClick={onClose}>
             ✕
           </button>
         </div>
-        <div className="modal-body">
-          <div className="preview-placeholder">
-            <span className="preview-icon">
-              {source.type === "pdf" ? "📄" : "🖼️"}
-            </span>
-            <p className="preview-name">{source.filename}</p>
-            <p className="preview-info">
-              {source.type === "pdf" ? "PDF Document" : "Image File"}
-            </p>
-            <p className="preview-hint">
-              Document preview will be available in a future update.
-            </p>
+        <div className="modal-body preview-body">
+          {/* Document icon */}
+          <div className="preview-doc-icon">
+            {source.type === "pdf" ? "📄" : "🖼️"}
+          </div>
+
+          {/* Full document name */}
+          <h2 className="preview-doc-title">{source.filename}</h2>
+
+          {/* Metadata table */}
+          <div className="preview-meta-table">
+            <div className="meta-row">
+              <span className="meta-label">Type</span>
+              <span className="meta-value">{source.type === "pdf" ? "PDF Document" : "Image File"}</span>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">Pages</span>
+              <span className="meta-value">{source.pages}</span>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">Chunks Indexed</span>
+              <span className="meta-value">{source.chunks_indexed}</span>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">Uploaded</span>
+              <span className="meta-value">{uploadDate}</span>
+            </div>
+            <div className="meta-row">
+              <span className="meta-label">RAG Status</span>
+              <span className="meta-value">
+                {source.enabled ? (
+                  <span className="status-badge active">Active</span>
+                ) : (
+                  <span className="status-badge inactive">Disabled</span>
+                )}
+              </span>
+            </div>
           </div>
         </div>
         <div className="modal-footer">
-          <span className="preview-meta">
-            {source.pages} pages • {source.chunks_indexed} chunks indexed
-          </span>
+          <button className="btn btn-outline" onClick={onClose}>
+            ← Back
+          </button>
         </div>
       </div>
     </div>

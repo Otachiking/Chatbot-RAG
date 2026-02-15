@@ -10,12 +10,14 @@ import React from "react";
 interface Props {
   filename: string;
   onAction: (type: "summarize" | "quiz") => void;
+  onDismiss: () => void;
   disabled?: boolean;
 }
 
 const RecommendCard: React.FC<Props> = ({
   filename,
   onAction,
+  onDismiss,
   disabled,
 }) => {
   // Truncate filename if too long
@@ -46,6 +48,13 @@ const RecommendCard: React.FC<Props> = ({
           🧩 Quiz
         </button>
       </div>
+      <button
+        className="banner-close"
+        onClick={onDismiss}
+        title="Dismiss"
+      >
+        ✕
+      </button>
     </div>
   );
 };

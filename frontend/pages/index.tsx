@@ -104,6 +104,8 @@ export default function Home() {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"chat" | "sources">("chat");
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // -- localStorage persistence ---------------------------------------------
 
@@ -306,6 +308,12 @@ export default function Home() {
       setIsTyping(true);
 
       try {
+        // Build conversation history (last 10 messages for context)
+        const historyMessages = messages
+          .filter((m) => m.role === "user" || m.role === "bot")
+          .slice(-10)
+          .map((m) => ({ role: m.role, text: m.text }));
+
         const res = await fetch(`${BACKEND}/api/query`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -315,6 +323,7 @@ export default function Home() {
             query,
             type,
             use_rag: ragOn,
+            history: historyMessages,
           }),
         });
 
@@ -355,6 +364,7 @@ export default function Home() {
     (result: UploadResult) => {
       setUploadResult(result);
       setUseRag(true);
+      setBannerDismissed(false);  // Show banner again for new upload
       
       // Add to sources list if not already present
       setSources((prev) => {
@@ -400,17 +410,23 @@ export default function Home() {
     async (type: "summarize" | "quiz") => {
       setActionLoading(true);
 
-      // Insert a user-like message so the conversation makes sense
-      const label = type === "summarize" ? "Summarize this document" : "Generate a quiz from this document";
+      // Build a visible label for the chat, but inject filename context for the backend
+      const displayLabel = type === "summarize" ? "Summarize this document" : "Generate a quiz from this document";
+      const filename = uploadResult?.filename || "the document";
+      const backendQuery = type === "summarize"
+        ? `Summarize the document "${filename}" comprehensively`
+        : `Generate a quiz from the document "${filename}"`;
+
       setMessages((prev) => [
         ...prev,
-        { id: `user-${Date.now()}`, role: "user", text: label },
+        { id: `user-${Date.now()}`, role: "user", text: displayLabel },
       ]);
 
-      await queryBackend(label, type, true);  // always use RAG for recommend actions
+      await queryBackend(backendQuery, type, true);  // always use RAG for recommend actions
       setActionLoading(false);
+      setBannerDismissed(true);  // dismiss banner after action
     },
-    [queryBackend]
+    [queryBackend, uploadResult]
   );
 
   // -- Render ---------------------------------------------------------------
@@ -444,9 +460,9 @@ export default function Home() {
             <h1>
               RAG Chat<span className="version-badge">v{APP_VERSION}</span>
             </h1>
-            <span className="last-update">Last Update: {LAST_UPDATED}</span>
+            <span className="last-update desktop-only">Last Update: {LAST_UPDATED}</span>
           </div>
-          <div className="header-right">
+          <div className="header-right desktop-only">
             <span>by{" "}
               <a 
                 href="https://portfolio-otachiking.vercel.app/" 
@@ -461,6 +477,22 @@ export default function Home() {
           </div>
         </header>
 
+        {/* ---- Mobile Tab Bar (Chat / Sources) ---- */}
+        <div className="mobile-tab-bar">
+          <button
+            className={`mobile-tab ${mobileTab === "chat" ? "active" : ""}`}
+            onClick={() => setMobileTab("chat")}
+          >
+            Chat
+          </button>
+          <button
+            className={`mobile-tab ${mobileTab === "sources" ? "active" : ""}`}
+            onClick={() => setMobileTab("sources")}
+          >
+            Sources
+          </button>
+        </div>
+
         {/* ---- Main grid (3-column NotebookLM style) ---- */}
         <div className={`main-grid ${leftCollapsed ? "left-collapsed" : ""} ${rightCollapsed ? "right-collapsed" : ""}`}>
           {/* Mobile overlay */}
@@ -473,6 +505,7 @@ export default function Home() {
             threads={threads}
             activeThreadId={activeThreadId}
             collapsed={leftCollapsed}
+            mobileOpen={mobileMenuOpen}
             onToggleCollapse={() => setLeftCollapsed(!leftCollapsed)}
             onSelectThread={(id) => {
               handleSelectThread(id);
@@ -485,7 +518,7 @@ export default function Home() {
           />
 
           {/* Center: Chat */}
-          <div className="chat-center">
+          <div className={`chat-center ${mobileTab !== "chat" ? "mobile-hidden" : ""}`}>
             <ChatWindow
               messages={messages}
               onSend={handleSend}
@@ -499,32 +532,35 @@ export default function Home() {
             />
             
             {/* Floating recommend banner */}
-            {uploadResult && (
+            {uploadResult && !bannerDismissed && (
               <RecommendCard
                 filename={uploadResult.filename}
                 onAction={handleRecommendAction}
+                onDismiss={() => setBannerDismissed(true)}
                 disabled={actionLoading}
               />
             )}
           </div>
 
           {/* Right: Sources Panel */}
-          <SourcesPanel
-            sources={sources}
-            collapsed={rightCollapsed}
-            onToggleCollapse={() => setRightCollapsed(!rightCollapsed)}
-            onToggleSource={handleToggleSource}
-            onToggleAll={handleToggleAllSources}
-            onDeleteSource={handleDeleteSource}
-            onPreviewSource={handlePreviewSource}
-            uploadComponent={
-              <FileUploader
-                backendUrl={BACKEND}
-                onUploadComplete={handleUploadComplete}
-                onError={(msg) => showToast(msg)}
-              />
-            }
-          />
+          <div className={`sources-wrapper ${mobileTab !== "sources" ? "mobile-hidden" : ""}`}>
+            <SourcesPanel
+              sources={sources}
+              collapsed={rightCollapsed}
+              onToggleCollapse={() => setRightCollapsed(!rightCollapsed)}
+              onToggleSource={handleToggleSource}
+              onToggleAll={handleToggleAllSources}
+              onDeleteSource={handleDeleteSource}
+              onPreviewSource={handlePreviewSource}
+              uploadComponent={
+                <FileUploader
+                  backendUrl={BACKEND}
+                  onUploadComplete={handleUploadComplete}
+                  onError={(msg) => showToast(msg)}
+                />
+              }
+            />
+          </div>
         </div>
       </div>
 

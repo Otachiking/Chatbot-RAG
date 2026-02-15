@@ -59,7 +59,9 @@ SUMMARY_SYSTEM_PROMPT = (
 
 GENERAL_SYSTEM_PROMPT = (
     "You are a helpful AI assistant. "
-    "Answer the user's question clearly and concisely."
+    "Answer the user's question clearly and concisely. "
+    "When the user uses pronouns like 'he', 'she', 'it', 'they', 'dia', 'mereka', "
+    "refer to the conversation history to resolve what or whom they are referring to."
 )
 
 # ---------------------------------------------------------------------------
@@ -92,10 +94,28 @@ def generate_from_prompt(prompt: str, system: str = "") -> str:
 # ---------------------------------------------------------------------------
 
 
-def generate_general_response(query: str) -> Dict[str, Any]:
+def _build_history_context(history: List[Dict[str, str]]) -> str:
+    """Format conversation history into a prompt-friendly string."""
+    if not history:
+        return ""
+    lines = []
+    for msg in history[-10:]:  # Last 10 messages for context
+        role = "User" if msg["role"] == "user" else "Assistant"
+        lines.append(f"{role}: {msg['text']}")
+    return "\n".join(lines)
+
+
+def generate_general_response(
+    query: str, history: Optional[List[Dict[str, str]]] = None
+) -> Dict[str, Any]:
     """Pure LLM generation — no retrieval."""
+    history_ctx = _build_history_context(history or [])
+    prompt = query
+    if history_ctx:
+        prompt = f"Conversation history:\n{history_ctx}\n\nCurrent question: {query}"
+
     gen_start = time.time()
-    answer = generate_from_prompt(query, system=GENERAL_SYSTEM_PROMPT)
+    answer = generate_from_prompt(prompt, system=GENERAL_SYSTEM_PROMPT)
     gen_ms = (time.time() - gen_start) * 1000
 
     return {
@@ -135,7 +155,11 @@ def _retrieve_chunks(
 
 
 def generate_rag_response(
-    query: str, file_id: str, top_k: int = 4, query_type: str = "freeform"
+    query: str,
+    file_id: str,
+    top_k: int = 4,
+    query_type: str = "freeform",
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     """Retrieve relevant chunks then generate an answer grounded in them."""
 
@@ -184,7 +208,11 @@ def generate_rag_response(
             sources.append({"file": key[0], "page": page})
 
     context = "\n\n".join(context_parts)
-    prompt = f"Konteks:\n{context}\n\nPertanyaan: {query}"
+    history_ctx = _build_history_context(history or [])
+    if history_ctx:
+        prompt = f"Konteks:\n{context}\n\nConversation history:\n{history_ctx}\n\nPertanyaan: {query}"
+    else:
+        prompt = f"Konteks:\n{context}\n\nPertanyaan: {query}"
 
     # 3. Select system prompt based on query type
     if query_type == "quiz":
@@ -221,6 +249,7 @@ async def handle_query(
     use_rag: bool = False,
     query_type: str = "freeform",
     top_k: int = 4,
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     """
     Route to general or RAG pipeline based on use_rag flag.
@@ -245,12 +274,12 @@ async def handle_query(
     try:
         if use_rag and file_id:
             result = await asyncio.to_thread(
-                generate_rag_response, effective_query, file_id, effective_top_k, query_type
+                generate_rag_response, effective_query, file_id, effective_top_k, query_type, history
             )
             mode = "rag"
         else:
             result = await asyncio.to_thread(
-                generate_general_response, effective_query
+                generate_general_response, effective_query, history
             )
             mode = "general"
 
