@@ -26,20 +26,28 @@ export interface Source {
 
 export interface ChatMessage {
   id: string;
-  role: "user" | "bot";
+  role: "user" | "bot" | "system";
   text: string;
   sources?: Source[];
+}
+
+export interface DocumentInfo {
+  filename: string;
+  pages: number;
+  chunks_indexed: number;
+  type: string;
 }
 
 interface Props {
   messages: ChatMessage[];
   onSend: (text: string) => void;
   isTyping: boolean;
+  documentInfo?: DocumentInfo | null;
 }
 
 // ---- Component -------------------------------------------------------------
 
-const ChatWindow: React.FC<Props> = ({ messages, onSend, isTyping }) => {
+const ChatWindow: React.FC<Props> = ({ messages, onSend, isTyping, documentInfo }) => {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -74,7 +82,13 @@ const ChatWindow: React.FC<Props> = ({ messages, onSend, isTyping }) => {
 RAG Chat - Transcript Export
 ════════════════════════════════════════════════════════════
 Tanggal : ${dateStr}
-Waktu   : ${timeStr}
+Waktu   : ${timeStr}${documentInfo ? `
+
+[DOCUMENT ATTACHED]
+File    : ${documentInfo.filename}
+Pages   : ${documentInfo.pages}
+Chunks  : ${documentInfo.chunks_indexed}
+Type    : ${documentInfo.type.toUpperCase()}` : ''}
 ════════════════════════════════════════════════════════════
 
 `;

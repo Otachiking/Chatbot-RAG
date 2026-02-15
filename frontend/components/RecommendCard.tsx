@@ -26,8 +26,8 @@ const RecommendCard: React.FC<Props> = ({
   <div className="recommend-card">
     <h3>✨ Document Ready</h3>
     <p>
-      <strong>{filename}</strong> ({pages} pages) has been processed. Try one of
-      the recommended actions below:
+      <span className="filename">{filename}</span>
+      ({pages} pages) has been processed. Try one of the recommended actions below:
     </p>
     <div className="actions">
       <button

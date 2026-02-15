@@ -33,6 +33,10 @@ const BACKEND =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
   "http://localhost:8000";
 
+// Version info - update this when releasing
+const APP_VERSION = "1.2.0";
+const LAST_UPDATED = "15 Februari 2026";
+
 // ---------------------------------------------------------------------------
 // Seed messages so the chat doesn't start empty
 // ---------------------------------------------------------------------------
@@ -204,9 +208,24 @@ export default function Home() {
       <div className="app-shell">
         {/* ---- Header ---- */}
         <header className="app-header">
-          <h1>
-            RAG Chat<span className="subtitle">— Demo</span>
-          </h1>
+          <div className="header-left">
+            <h1>
+              RAG Chat<span className="subtitle">— Demo</span>
+            </h1>
+            <div className="header-meta">
+              <span>by{" "}
+                <a 
+                  href="https://portfolio-otachiking.vercel.app/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="author-link"
+                >
+                  Muhammad Iqbal Rasyid
+                </a>
+              </span>
+              <span className="version-info">v{APP_VERSION} • {LAST_UPDATED}</span>
+            </div>
+          </div>
         </header>
 
         {/* ---- Main grid ---- */}
@@ -216,6 +235,12 @@ export default function Home() {
             messages={messages}
             onSend={handleSend}
             isTyping={isTyping}
+            documentInfo={uploadResult ? {
+              filename: uploadResult.filename,
+              pages: uploadResult.pages,
+              chunks_indexed: uploadResult.chunks_indexed,
+              type: uploadResult.type,
+            } : null}
           />
 
           {/* Right: sidebar */}

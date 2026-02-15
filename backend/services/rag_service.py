@@ -43,6 +43,20 @@ RAG_SYSTEM_PROMPT = (
     "Sertakan sumber dalam format: (Hal. X)."
 )
 
+QUIZ_SYSTEM_PROMPT = (
+    "Kamu adalah pembuat kuis yang ahli. "
+    "Buat soal pilihan ganda berdasarkan informasi dari dokumen yang diberikan. "
+    "Format setiap soal dengan jelas: nomor soal, pertanyaan, pilihan A/B/C/D, lalu kunci jawaban. "
+    "Pastikan soal bervariasi tingkat kesulitannya dan mencakup poin-poin penting dari dokumen."
+)
+
+SUMMARY_SYSTEM_PROMPT = (
+    "Kamu adalah asisten yang ahli merangkum dokumen. "
+    "Buatlah ringkasan yang komprehensif dan terstruktur. "
+    "Gunakan bullet points untuk poin-poin utama. "
+    "Sertakan halaman referensi dalam format (Hal. X)."
+)
+
 GENERAL_SYSTEM_PROMPT = (
     "You are a helpful AI assistant. "
     "Answer the user's question clearly and concisely."
@@ -121,7 +135,7 @@ def _retrieve_chunks(
 
 
 def generate_rag_response(
-    query: str, file_id: str, top_k: int = 4
+    query: str, file_id: str, top_k: int = 4, query_type: str = "freeform"
 ) -> Dict[str, Any]:
     """Retrieve relevant chunks then generate an answer grounded in them."""
 
@@ -146,8 +160,9 @@ def generate_rag_response(
         }
 
     # Optional: if best similarity is below threshold, fallback
+    # Skip this for quiz/summary since we need the document content
     similarities = [max(0, 1 - d) for d in distances]
-    if similarities and similarities[0] < RAG_SIMILARITY_THRESHOLD:
+    if query_type == "freeform" and similarities and similarities[0] < RAG_SIMILARITY_THRESHOLD:
         # Low confidence — fall back to general chat
         gen_result = generate_general_response(query)
         gen_result["retrieval_latency_ms"] = ret_ms
@@ -171,9 +186,17 @@ def generate_rag_response(
     context = "\n\n".join(context_parts)
     prompt = f"Konteks:\n{context}\n\nPertanyaan: {query}"
 
-    # 3. Generation
+    # 3. Select system prompt based on query type
+    if query_type == "quiz":
+        system_prompt = QUIZ_SYSTEM_PROMPT
+    elif query_type == "summarize":
+        system_prompt = SUMMARY_SYSTEM_PROMPT
+    else:
+        system_prompt = RAG_SYSTEM_PROMPT
+
+    # 4. Generation
     gen_start = time.time()
-    answer = generate_from_prompt(prompt, system=RAG_SYSTEM_PROMPT)
+    answer = generate_from_prompt(prompt, system=system_prompt)
     gen_ms = (time.time() - gen_start) * 1000
 
     return {
@@ -207,18 +230,20 @@ async def handle_query(
 
     # Enrich query for specific action types
     effective_query = query
+    effective_top_k = top_k
+    
     if use_rag and file_id:
         if query_type == "summarize":
-            effective_query = f"Berikan ringkasan lengkap dokumen ini. {query}"
+            effective_query = "Berikan ringkasan lengkap dan komprehensif dari seluruh isi dokumen ini. Sertakan poin-poin utama."
+            effective_top_k = 20  # Get more chunks for summary
         elif query_type == "quiz":
-            effective_query = (
-                f"Buat kuis (5 soal pilihan ganda) berdasarkan dokumen ini. {query}"
-            )
+            effective_query = "Buat 5 soal kuis pilihan ganda (A, B, C, D) beserta kunci jawabannya berdasarkan informasi penting dalam dokumen ini."
+            effective_top_k = 20  # Get more chunks for quiz
 
     try:
         if use_rag and file_id:
             result = await asyncio.to_thread(
-                generate_rag_response, effective_query, file_id, top_k
+                generate_rag_response, effective_query, file_id, effective_top_k, query_type
             )
             mode = "rag"
         else:
