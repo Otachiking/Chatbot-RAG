@@ -14,9 +14,11 @@ so swapping to a different LLM is a single-point change.
 import time
 import asyncio
 import traceback
+import re
 from typing import Any, Dict, List, Optional
 
 import google.genai as genai
+from google.genai import errors as genai_errors
 import chromadb
 
 from utils.settings import (
@@ -88,6 +90,36 @@ def generate_from_prompt(prompt: str, system: str = "") -> str:
         config=config,
     )
     return response.text
+
+
+def _is_quota_exhausted_error(exc: Exception) -> bool:
+    """Detect Gemini quota / rate limit exhaustion errors."""
+    if isinstance(exc, genai_errors.ClientError):
+        status_code = getattr(exc, "status_code", None)
+        if status_code == 429:
+            return True
+
+    text = str(exc).upper()
+    return (
+        "RESOURCE_EXHAUSTED" in text
+        or "QUOTA EXCEEDED" in text
+        or "STATUS': 'RESOURCE_EXHAUSTED'" in text
+    )
+
+
+def _extract_retry_after_seconds(exc: Exception) -> Optional[int]:
+    """Best-effort extraction of retry delay from Gemini error text."""
+    text = str(exc)
+
+    retry_in = re.search(r"Please retry in\s+([0-9]+(?:\.[0-9]+)?)s", text)
+    if retry_in:
+        return max(1, int(float(retry_in.group(1))))
+
+    retry_delay = re.search(r"'retryDelay':\s*'([0-9]+)s'", text)
+    if retry_delay:
+        return max(1, int(retry_delay.group(1)))
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -332,6 +364,27 @@ async def handle_query(
             traceback_text=tb,
             model=GEMINI_MODEL,
         )
+
+        if _is_quota_exhausted_error(exc):
+            retry_after = _extract_retry_after_seconds(exc)
+            if retry_after:
+                message = (
+                    f"Maaf, kuota layanan AI sedang habis. Coba lagi dalam sekitar {retry_after} detik. "
+                    f"(ref: {request_id})"
+                )
+            else:
+                message = (
+                    f"Maaf, kuota layanan AI sedang habis. Coba lagi beberapa saat lagi. "
+                    f"(ref: {request_id})"
+                )
+
+            return {
+                "answer": message,
+                "sources": [],
+                "file_id": file_id,
+                "request_id": request_id,
+            }
+
         try:
             fallback = await asyncio.to_thread(
                 generate_general_response, query, history
