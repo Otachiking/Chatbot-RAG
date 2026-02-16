@@ -22,7 +22,7 @@ from routers.query import router as query_router
 app = FastAPI(
     title="RAG ChatBot",
     version="0.2.0",
-    description="Hybrid RAG backend — Gemini 2.5 Flash + ChromaDB.",
+    description="Hybrid RAG backend — Gemini 2.5 Pro TTS + ChromaDB.",
 )
 
 # Allow the Next.js dev server (localhost:3000) to call us

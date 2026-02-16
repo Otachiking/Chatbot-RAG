@@ -11,7 +11,7 @@
  *  - Collapsible (shows only icons when collapsed)
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 export interface Source {
   file_id: string;
@@ -21,6 +21,7 @@ export interface Source {
   type: "pdf" | "image";
   uploadedAt: string;
   enabled: boolean;
+  preview_url?: string;
 }
 
 interface Props {
@@ -49,6 +50,19 @@ const SourcesPanel: React.FC<Props> = ({
   onPreviewSource,
   uploadComponent,
 }) => {
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setIsMobileOrTablet(window.innerWidth <= 860);
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
+
+  const isCollapsed = collapsed && !isMobileOrTablet;
   const enabledCount = sources.filter((s) => s.enabled).length;
   const allEnabled = sources.length > 0 && enabledCount === sources.length;
 
@@ -59,22 +73,22 @@ const SourcesPanel: React.FC<Props> = ({
   const getFileIcon = (type: string) => FILE_TYPE_ICONS[type] || "📄";
 
   return (
-    <aside className={`sources-panel ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`sources-panel ${isCollapsed ? "collapsed" : ""}`}>
       <div className="panel-header">
-        {!collapsed && <h3>📚 Sources</h3>}
+        {!isCollapsed && <h3>📚 Sources</h3>}
         <button
           className="collapse-btn"
           onClick={onToggleCollapse}
-          title={collapsed ? "Expand" : "Collapse"}
+          title={isCollapsed ? "Expand" : "Collapse"}
         >
           <span className="material-symbols-outlined">
-            {collapsed ? "left_panel_open" : "right_panel_close"}
+            {isCollapsed ? "left_panel_open" : "right_panel_close"}
           </span>
         </button>
       </div>
 
       {/* File uploader - only when expanded */}
-      {!collapsed && (
+      {!isCollapsed && (
         <div className="upload-section">
           {uploadComponent}
         </div>
@@ -82,7 +96,7 @@ const SourcesPanel: React.FC<Props> = ({
 
       {/* Source list */}
       <div className="sources-list">
-        {sources.length === 0 && !collapsed ? (
+        {sources.length === 0 && !isCollapsed ? (
           <div className="empty-state">
             <p>No sources yet.</p>
             <p className="hint">Upload PDF or images to get started.</p>
@@ -91,10 +105,10 @@ const SourcesPanel: React.FC<Props> = ({
           sources.map((source) => (
             <div
               key={source.file_id}
-              className={`source-item ${source.enabled ? "enabled" : "disabled"} ${collapsed ? "collapsed" : ""}`}
-              title={collapsed ? source.filename : undefined}
+              className={`source-item ${source.enabled ? "enabled" : "disabled"} ${isCollapsed ? "collapsed" : ""}`}
+              title={isCollapsed ? source.filename : undefined}
             >
-              {collapsed ? (
+              {isCollapsed ? (
                 <span
                   className="source-icon-only"
                   onClick={() => onPreviewSource(source)}

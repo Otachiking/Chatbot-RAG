@@ -22,6 +22,7 @@ export interface UploadResult {
   pages: number;
   chunks_indexed: number;
   type: "pdf" | "image";
+  preview_url?: string;
   recommended_actions: string[];
 }
 

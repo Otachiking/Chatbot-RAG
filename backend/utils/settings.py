@@ -19,7 +19,7 @@ load_dotenv(_ENV_PATH)
 # ---------------------------------------------------------------------------
 
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-pro-tts")
 USE_LOCAL_LLM: bool = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
 
 # ---------------------------------------------------------------------------
@@ -44,5 +44,6 @@ RAG_SIMILARITY_THRESHOLD: float = float(
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 CHROMA_PERSIST_DIR: str = str(_BACKEND_ROOT / "chroma_data")
+UPLOADS_DIR: str = str(_BACKEND_ROOT / "uploads")
 LOG_DIR: Path = _BACKEND_ROOT / "logs"
 LOG_FILE: Path = LOG_DIR / "queries.jsonl"

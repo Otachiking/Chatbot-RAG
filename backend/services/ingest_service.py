@@ -28,6 +28,7 @@ from utils.settings import (
     CHUNK_OVERLAP,
     CHROMA_PERSIST_DIR,
     GEMINI_API_KEY,
+    UPLOADS_DIR,
 )
 
 # ---------------------------------------------------------------------------
@@ -218,6 +219,17 @@ def detect_file_type(filename: str) -> str:
     return "unknown"
 
 
+def save_uploaded_file(file_id: str, filename: str, file_bytes: bytes) -> str:
+    uploads_path = Path(UPLOADS_DIR)
+    uploads_path.mkdir(parents=True, exist_ok=True)
+
+    safe_name = Path(filename).name or "uploaded_file"
+    stored_name = f"{file_id}__{safe_name}"
+    stored_path = uploads_path / stored_name
+    stored_path.write_bytes(file_bytes)
+    return str(stored_path)
+
+
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
@@ -231,6 +243,9 @@ async def process_upload(filename: str, file_bytes: bytes) -> Dict[str, Any]:
     """
     file_type = detect_file_type(filename)
     file_id = f"doc-{uuid.uuid4().hex[:8]}"
+
+    # Save original uploaded file for preview endpoint
+    await asyncio.to_thread(save_uploaded_file, file_id, filename, file_bytes)
 
     # 1. Extract text
     if file_type == "pdf":
@@ -251,5 +266,6 @@ async def process_upload(filename: str, file_bytes: bytes) -> Dict[str, Any]:
         "pages": len(pages),
         "chunks_indexed": chunks_indexed,
         "type": file_type,
+        "preview_url": f"/api/files/{file_id}",
         "recommended_actions": ["summarize", "quiz"],
     }

@@ -36,7 +36,7 @@ const BACKEND =
   "http://localhost:8000";
 
 // Version info - update this when releasing
-const APP_VERSION = "1.3.2";
+const APP_VERSION = "1.3.3";
 const LAST_UPDATED = "15 Feb '26";
 
 // ---------------------------------------------------------------------------
@@ -388,6 +388,7 @@ export default function Home() {
           type: result.type,
           uploadedAt: new Date().toISOString(),
           enabled: true,
+          preview_url: result.preview_url,
         };
         return [...prev, newSource];
       });
@@ -577,6 +578,7 @@ export default function Home() {
       {previewSource && (
         <PreviewModal
           source={previewSource}
+          backendUrl={BACKEND}
           onClose={() => setPreviewSource(null)}
         />
       )}

@@ -300,7 +300,14 @@ html, body {
 
   /* Chat center in mobile */
   .chat-center {
+    height: calc(100vh - 100px);
     max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .chat-center .chat-area {
+    overflow: visible;
   }
 
   /* Recommend banner mobile */
@@ -415,6 +422,7 @@ html, body {
   position: relative;
   max-height: calc(100vh - 54px);
   overflow: hidden;
+  min-height: 0;
 }
 
 /* ---- Chat bubbles ---- */
@@ -511,6 +519,9 @@ html, body {
   padding: 12px 16px;
   background: var(--surface);
   border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  z-index: 12;
 }
 
 .input-bar input {

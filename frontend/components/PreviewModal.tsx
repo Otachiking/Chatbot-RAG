@@ -11,10 +11,11 @@ import { Source } from "./SourcesPanel";
 
 interface Props {
   source: Source | null;
+  backendUrl: string;
   onClose: () => void;
 }
 
-const PreviewModal: React.FC<Props> = ({ source, onClose }) => {
+const PreviewModal: React.FC<Props> = ({ source, backendUrl, onClose }) => {
   if (!source) return null;
 
   const uploadDate = new Date(source.uploadedAt).toLocaleDateString("id-ID", {
@@ -22,6 +23,8 @@ const PreviewModal: React.FC<Props> = ({ source, onClose }) => {
     month: "long",
     year: "numeric",
   });
+  const previewPath = source.preview_url || `/api/files/${source.file_id}`;
+  const previewUrl = `${backendUrl}${previewPath}`;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -33,10 +36,19 @@ const PreviewModal: React.FC<Props> = ({ source, onClose }) => {
           </button>
         </div>
         <div className="modal-body preview-body">
-          {/* Document icon */}
-          <div className="preview-doc-icon">
-            {source.type === "pdf" ? "📄" : "🖼️"}
-          </div>
+          {source.type === "pdf" ? (
+            <iframe
+              src={previewUrl}
+              className="pdf-preview-frame"
+              title={`Preview ${source.filename}`}
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt={source.filename}
+              className="image-preview-full"
+            />
+          )}
 
           {/* Full document name */}
           <h2 className="preview-doc-title">{source.filename}</h2>
