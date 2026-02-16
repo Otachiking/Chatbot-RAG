@@ -302,8 +302,15 @@ html, body {
   .chat-center {
     height: calc(100vh - 100px);
     max-height: calc(100vh - 100px);
-    overflow: hidden;
+    display: flex;
   }
+
+  .chat-area {
+  flex: 1;
+  overflow-y: scroll;
+  padding: 16px;
+  }
+
 
   /* Recommend banner mobile */
   .recommend-banner {

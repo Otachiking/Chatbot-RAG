@@ -138,63 +138,67 @@ https://portfolio-otachiking.vercel.app/
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-      {/* ---- Messages ---- */}
-      <div className="chat-area" style={{ overflowY: "scroll" }}>
-        {messages.map((m) => (
-          <div key={m.id} className={`msg ${m.role}`}>
-            <div className="msg-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
-            </div>
-            {m.sources?.map((s, i) => (
-              <span key={i} className="citation">
-                Hal.&thinsp;{s.page}
-              </span>
-            ))}
-            {m.role === "bot" && (
-              <button
-                className="copy-btn"
-                onClick={() => copyToClipboard(m.text, m.id)}
-                title={copiedId === m.id ? "Copied!" : "Copy message"}
-              >
-                {copiedId === m.id ? "✓" : "📋"}
-              </button>
-            )}
+  <>
+    {/* ---- Messages ---- */}
+    <div className="chat-area">
+      {messages.map((m) => (
+        <div key={m.id} className={`msg ${m.role}`}>
+          <div className="msg-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {m.text}
+            </ReactMarkdown>
           </div>
-        ))}
 
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="typing-indicator">
-            <span /><span /><span />
-          </div>
-        )}
+          {m.sources?.map((s, i) => (
+            <span key={i} className="citation">
+              Hal.&thinsp;{s.page}
+            </span>
+          ))}
 
-        <div ref={bottomRef} />
-      </div>
+          {m.role === "bot" && (
+            <button
+              className="copy-btn"
+              onClick={() => copyToClipboard(m.text, m.id)}
+              title={copiedId === m.id ? "Copied!" : "Copy message"}
+            >
+              {copiedId === m.id ? "✓" : "📋"}
+            </button>
+          )}
+        </div>
+      ))}
 
-      {/* ---- Input bar ---- */}
-      <div className="input-bar">
-        <input
-          type="text"
-          placeholder="Ask a question…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-        />
-        <button className="btn btn-primary" onClick={handleSend}>
-          Send
-        </button>
-        <button
-          className="btn btn-ghost btn-icon"
-          onClick={exportTranscript}
-          title="Export transcript"
-        >
-          💾
-        </button>
-      </div>
+      {/* Typing indicator */}
+      {isTyping && (
+        <div className="typing-indicator">
+          <span /><span /><span />
+        </div>
+      )}
+
+      <div ref={bottomRef} />
     </div>
-  );
+
+    {/* ---- Input bar ---- */}
+    <div className="input-bar">
+      <input
+        type="text"
+        placeholder="Ask a question…"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+      />
+      <button className="btn btn-primary" onClick={handleSend}>
+        Send
+      </button>
+      <button
+        className="btn btn-ghost btn-icon"
+        onClick={exportTranscript}
+        title="Export transcript"
+      >
+        💾
+      </button>
+    </div>
+  </>
+);
 };
 
 export default ChatWindow;

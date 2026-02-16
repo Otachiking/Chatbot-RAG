@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local env / tooling
+.env
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.vscode/
+.idea/
+
+# Runtime/generated data (do not bake into image)
+chroma_data/
+logs/
+uploads/
+
+# Build/OS noise
+*.log
+.DS_Store
+Thumbs.db
