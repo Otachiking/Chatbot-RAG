@@ -21,8 +21,8 @@ from routers.query import router as query_router
 
 app = FastAPI(
     title="RAG ChatBot",
-    version="0.2.0",
-    description="Hybrid RAG backend — Gemini 2 Flash + ChromaDB.",
+    version="1.3.5",
+    description="Hybrid RAG backend — Gemini 3 Pro + ChromaDB.",
 )
 
 # Allow the Next.js dev server (localhost:3000) to call us
@@ -52,7 +52,7 @@ async def root():
     """Landing page — confirms the server is running."""
     return {
         "app": "RAG ChatBot",
-        "version": "0.2.0",
+        "version": "1.3.5",
         "docs": "/docs",
         "health": "/api/health",
     }

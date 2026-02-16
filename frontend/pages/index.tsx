@@ -36,8 +36,8 @@ const BACKEND =
   "http://localhost:8000";
 
 // Version info - update this when releasing
-const APP_VERSION = "1.3.3";
-const LAST_UPDATED = "15 Feb '26";
+const APP_VERSION = "1.3.5";
+const LAST_UPDATED = "16 Feb '26 - 22:00";
 
 const THREAD_ICONS = ["💬", "📝", "🔍", "💡", "📊", "🎯", "📚", "🧪", "⚡", "🌟", "🧠", "🚀"];
 
