@@ -13,6 +13,7 @@ so swapping to a different LLM is a single-point change.
 
 import time
 import asyncio
+import traceback
 from typing import Any, Dict, List, Optional
 
 import google.genai as genai
@@ -259,6 +260,7 @@ async def handle_query(
     This is the function the /api/query endpoint calls.
     """
     start = time.time()
+    request_id = f"req-{int(time.time() * 1000)}"
 
     # Enrich query for specific action types
     effective_query = query
@@ -299,6 +301,7 @@ async def handle_query(
             generation_latency_ms=result.get("generation_latency_ms"),
             total_latency_ms=total_ms,
             success=True,
+            model=GEMINI_MODEL,
         )
 
         return {
@@ -309,6 +312,13 @@ async def handle_query(
 
     except Exception as exc:
         total_ms = (time.time() - start) * 1000
+        tb = traceback.format_exc()
+
+        print(
+            f"[RAG_ERROR] request_id={request_id} mode={'rag' if (use_rag and file_id) else 'general'} "
+            f"model={GEMINI_MODEL} file_id={file_id} error_type={type(exc).__name__} error={exc}\n{tb}"
+        )
+
         log_query(
             query=effective_query,
             mode="rag" if (use_rag and file_id) else "general",
@@ -317,6 +327,10 @@ async def handle_query(
             total_latency_ms=total_ms,
             success=False,
             error=str(exc),
+            error_type=type(exc).__name__,
+            error_stage="handle_query",
+            traceback_text=tb,
+            model=GEMINI_MODEL,
         )
         try:
             fallback = await asyncio.to_thread(
@@ -326,10 +340,30 @@ async def handle_query(
                 "answer": fallback.get("answer", "Maaf, terjadi gangguan sementara. Silakan coba lagi."),
                 "sources": [],
                 "file_id": file_id,
+                "request_id": request_id,
             }
-        except Exception:
+        except Exception as fallback_exc:
+            fallback_tb = traceback.format_exc()
+            print(
+                f"[RAG_ERROR] request_id={request_id} fallback_failed error_type={type(fallback_exc).__name__} "
+                f"error={fallback_exc}\n{fallback_tb}"
+            )
+            log_query(
+                query=effective_query,
+                mode="fallback-general",
+                file_id=file_id,
+                use_rag=use_rag,
+                total_latency_ms=total_ms,
+                success=False,
+                error=str(fallback_exc),
+                error_type=type(fallback_exc).__name__,
+                error_stage="fallback_general",
+                traceback_text=fallback_tb,
+                model=GEMINI_MODEL,
+            )
             return {
-                "answer": "Maaf, server sedang sibuk. Coba beberapa detik lagi.",
+                "answer": f"Maaf, server sedang sibuk. Coba beberapa detik lagi. (ref: {request_id})",
                 "sources": [],
                 "file_id": file_id,
+                "request_id": request_id,
             }

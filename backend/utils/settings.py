@@ -19,7 +19,7 @@ load_dotenv(_ENV_PATH)
 # ---------------------------------------------------------------------------
 
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-pro-tts")
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 USE_LOCAL_LLM: bool = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
 
 # ---------------------------------------------------------------------------

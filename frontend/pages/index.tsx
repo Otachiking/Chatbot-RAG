@@ -39,6 +39,11 @@ const BACKEND =
 const APP_VERSION = "1.3.3";
 const LAST_UPDATED = "15 Feb '26";
 
+const THREAD_ICONS = ["💬", "📝", "🔍", "💡", "📊", "🎯", "📚", "🧪", "⚡", "🌟", "🧠", "🚀"];
+
+const getRandomThreadIcon = () =>
+  THREAD_ICONS[Math.floor(Math.random() * THREAD_ICONS.length)];
+
 // ---------------------------------------------------------------------------
 // Seed messages so the chat doesn't start empty
 // ---------------------------------------------------------------------------
@@ -183,7 +188,7 @@ export default function Home() {
     const newThread: Thread = {
       id: `thread-${Date.now()}`,
       title: "New Chat",
-      icon: "💬",
+      icon: getRandomThreadIcon(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -398,7 +403,7 @@ export default function Home() {
         const newThread: Thread = {
           id: `thread-${Date.now()}`,
           title: result.filename.replace(/\.[^/.]+$/, "").slice(0, 30),
-          icon: result.type === "pdf" ? "📄" : "🖼️",
+          icon: getRandomThreadIcon(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };

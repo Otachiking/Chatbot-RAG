@@ -36,6 +36,10 @@ def log_query(
     total_latency_ms: Optional[float] = None,
     success: bool = True,
     error: Optional[str] = None,
+    error_type: Optional[str] = None,
+    error_stage: Optional[str] = None,
+    traceback_text: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> None:
     """Append one JSON line to the log file."""
     _ensure_log_dir()
@@ -53,6 +57,10 @@ def log_query(
         "total_latency_ms": round(total_latency_ms, 2) if total_latency_ms is not None else None,
         "success": success,
         "error": error,
+        "error_type": error_type,
+        "error_stage": error_stage,
+        "traceback": traceback_text,
+        "model": model,
     }
 
     with open(LOG_FILE, "a", encoding="utf-8") as f:

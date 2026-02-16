@@ -140,7 +140,7 @@ https://portfolio-otachiking.vercel.app/
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       {/* ---- Messages ---- */}
-      <div className="chat-area">
+      <div className="chat-area" style={{ overflowY: "scroll" }}>
         {messages.map((m) => (
           <div key={m.id} className={`msg ${m.role}`}>
             <div className="msg-content">
